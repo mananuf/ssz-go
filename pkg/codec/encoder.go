@@ -15,10 +15,25 @@ func MarshalBatch(b types.Batch) []byte {
 	copy(buffer[0:4], util.Uint32ToBytes(b.Version))
 	copy(buffer[4:8], util.Uint32ToBytes(uint32(offsetSize)))
 
-	startIndex := offsetSize
 	for _, data := range b.Data {
-		copy(buffer[startIndex:startIndex+4], util.Uint32ToBytes(uint32(data)))
-		startIndex += 4
+		copy(buffer[offsetSize:offsetSize+4], util.Uint32ToBytes(uint32(data)))
+		offsetSize += 4
+	}
+
+	return buffer
+}
+
+func MarshalTransaction(t types.Transaction) []byte {
+	offset := 6
+	totalByteSize := offset + (len(t.ToIDs) * 2)
+	buffer := make([]byte, totalByteSize)
+
+	copy(buffer[0:2], util.Uint16ToBytes(t.FromID))
+	copy(buffer[2:6], util.Uint16ToBytes(uint16(offset)))
+
+	for _, id := range t.ToIDs {
+		copy(buffer[offset:offset+2], util.Uint16ToBytes(id))
+		offset += 2
 	}
 
 	return buffer
