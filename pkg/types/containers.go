@@ -1,8 +1,17 @@
 package types
 
 type Batch struct {
-    Version uint32   // Fixed (4 bytes)
-    Data    []uint32 // Variable (requires an Offset!)
+    Version uint32
+    Data    []uint32
+}
+
+type Transaction struct {
+    FromID uint16
+    ToIDs  []uint16
+}
+
+type TxBlock struct {
+    Txs []Transaction
 }
 
 type Validator struct {
