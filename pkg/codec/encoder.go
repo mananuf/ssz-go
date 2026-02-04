@@ -6,8 +6,6 @@ import (
 )
 
 func MarshalBatch(b types.Batch) []byte {
-	// version = uint16/8 = 4bytes
-	// offset = 4 bytes
 	offsetSize := 8
 	totalByteSize := offsetSize + (len(b.Data) * 4)
 	buffer := make([]byte, totalByteSize)
@@ -24,16 +22,49 @@ func MarshalBatch(b types.Batch) []byte {
 }
 
 func MarshalTransaction(t types.Transaction) []byte {
-	offset := 6
-	totalByteSize := offset + (len(t.ToIDs) * 2)
-	buffer := make([]byte, totalByteSize)
+	fixedPartSize := 6 // 2 for FromID + 4 for Offset
+	variablePartSize := len(t.ToIDs) * 2
+	buffer := make([]byte, fixedPartSize+variablePartSize)
 
 	copy(buffer[0:2], util.Uint16ToBytes(t.FromID))
-	copy(buffer[2:6], util.Uint16ToBytes(uint16(offset)))
+	copy(buffer[2:6], util.Uint32ToBytes(uint32(fixedPartSize)))
 
+	currentPos := fixedPartSize
 	for _, id := range t.ToIDs {
-		copy(buffer[offset:offset+2], util.Uint16ToBytes(id))
-		offset += 2
+		copy(buffer[currentPos:currentPos+2], util.Uint16ToBytes(id))
+		currentPos += 2
+	}
+
+	return buffer
+}
+
+func MarshalTxBatch(tb types.TxBlock) []byte {
+	numberOfTxs := len(tb.Txs)
+
+	fixedPartSize := numberOfTxs * 4
+	var variablePartSize uint64
+	serializedTxs := make([][]byte, numberOfTxs)
+
+	for i, tx := range tb.Txs {
+		data := MarshalTransaction(tx)
+		serializedTxs[i] = data
+		variablePartSize += uint64(len(data))
+	}
+
+	buffer := make([]byte, (fixedPartSize + int(variablePartSize)))
+
+	copy(buffer[0:4], util.Uint32ToBytes(uint32(fixedPartSize)))
+
+	currentOffset := fixedPartSize
+	dataPointer := fixedPartSize
+
+	for i, data := range serializedTxs {
+		copy(buffer[i*4:(i*4)+4], util.Uint32ToBytes(uint32(currentOffset)))
+		copy(buffer[dataPointer:dataPointer+len(data)], data)
+
+		currentOffset += len(data)
+
+		dataPointer += len(data)
 	}
 
 	return buffer
