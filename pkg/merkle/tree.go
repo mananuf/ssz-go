@@ -2,7 +2,6 @@ package merkle
 
 import (
 	"crypto/sha256"
-	"fmt"
 )
 
 var ZeroCache [33][32]byte
@@ -55,8 +54,6 @@ func Pack(data []byte) [][32]byte {
 	for i := 0; i < numChunks; i++ {
 		startIndex := i * 32
 		stopIndex := startIndex + 32
-
-		fmt.Println(startIndex, stopIndex, len(data), stopIndex > len(data))
 
 		if stopIndex > len(data) {
 			copy(packedData[i][:], data[startIndex:])
