@@ -65,4 +65,12 @@ func main() {
 
 	fmt.Println(marshalTxBatchCopy)
 	fmt.Println(packedDataCopy)
+
+	batch := types.Batch {
+		Version: 10,
+		Data: []uint32{10, 20, 30, 40, 50},
+	}
+
+	fmt.Println(merkle.HashTreeRootBatch(batch))
+	
 }

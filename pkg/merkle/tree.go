@@ -2,6 +2,11 @@ package merkle
 
 import (
 	"crypto/sha256"
+	"encoding/binary"
+
+	"github.com/mananuf/ssz-go/internal/util"
+	"github.com/mananuf/ssz-go/pkg/codec"
+	"github.com/mananuf/ssz-go/pkg/types"
 )
 
 var ZeroCache [33][32]byte
@@ -63,4 +68,35 @@ func Pack(data []byte) [][32]byte {
 	}
 
 	return packedData
+}
+
+func HashTreeRoot(v types.Validator) [32]byte {
+	return  HashedLayer(Pack(codec.MarshalValidator(v)))
+}
+
+func HashTreeRootBatch(b types.Batch) [32]byte {
+	packVersion := Pack(util.Uint32ToBytes(b.Version))
+
+	buffer := make([]byte, (len(b.Data) * 4))
+	for i, data := range b.Data {
+		start := i * 4
+		end := start + 4
+		copy(buffer[start:end], util.Uint32ToBytes(uint32(data)))
+	}
+
+	hashedList := HashedLayer(Pack(buffer))
+	dataRoot := MixInLength(hashedList, len(b.Data))
+
+	return HashedLayer([][32]byte{packVersion[0], dataRoot})
+}
+
+func MixInLength(root [32]byte, length int) [32]byte {
+	lenghtByteSlice := make([]byte, 32)
+	binary.LittleEndian.PutUint64(lenghtByteSlice, uint64(length))
+
+	buffer := make([]byte, 64)
+	copy(buffer[0:32], root[:])
+	copy(buffer[32:64], lenghtByteSlice)
+
+	return sha256.Sum256(buffer)
 }
