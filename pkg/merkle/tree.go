@@ -2,6 +2,7 @@ package merkle
 
 import (
 	"crypto/sha256"
+	"fmt"
 )
 
 var ZeroCache [33][32]byte
@@ -15,7 +16,7 @@ func Init() {
 	}
 }
 
-func HashTreeRoot(leaves [][32]byte) [32]byte {
+func HashedLayer(leaves [][32]byte) [32]byte {
 	length := len(leaves)
 
 	if length == 0 {
@@ -40,4 +41,29 @@ func HashTreeRoot(leaves [][32]byte) [32]byte {
 	currentLayer = nextLayer
 
 	return currentLayer[0]
+}
+
+func Pack(data []byte) [][32]byte {
+	numChunks := (len(data) + 31) / 32
+
+	if len(data) == 0 {
+        return [][32]byte{{}}
+    }
+
+	packedData := make([][32]byte,  numChunks)
+
+	for i := 0; i < numChunks; i++ {
+		startIndex := i * 32
+		stopIndex := startIndex + 32
+
+		fmt.Println(startIndex, stopIndex, len(data), stopIndex > len(data))
+
+		if stopIndex > len(data) {
+			copy(packedData[i][:], data[startIndex:])
+		} else {
+			copy(packedData[i][:], data[startIndex:stopIndex])
+		}
+	}
+
+	return packedData
 }

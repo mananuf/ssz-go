@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-
 	"github.com/mananuf/ssz-go/pkg/codec"
 	"github.com/mananuf/ssz-go/pkg/merkle"
 	"github.com/mananuf/ssz-go/pkg/types"
@@ -25,7 +24,7 @@ func main() {
 
 	fmt.Println(txBlock)
 
-	codec.MarshalTxBatch(txBlock)
+	marshalTxBatch := codec.MarshalTxBatch(txBlock)
 
 	leaf0 := [32]byte{}
 	for i := range leaf0 {
@@ -49,8 +48,21 @@ func main() {
 
 	input := [][32]byte{leaf0, leaf1, leaf2, leaf3}
 
-	merkleRoot := merkle.HashTreeRoot(input)
+	merkleRoot := merkle.HashedLayer(input)
 
 	fmt.Println(merkleRoot)
 
+	packedData := merkle.Pack(marshalTxBatch)
+
+	fmt.Println(marshalTxBatch)
+	fmt.Println(packedData)
+
+	marshalTxBatchCopy := make([]byte, 72)
+	copy(marshalTxBatchCopy[0:36], marshalTxBatch)
+	copy(marshalTxBatchCopy[36:72], marshalTxBatch)
+
+	packedDataCopy := merkle.Pack(marshalTxBatchCopy)
+
+	fmt.Println(marshalTxBatchCopy)
+	fmt.Println(packedDataCopy)
 }
